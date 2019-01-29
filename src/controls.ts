@@ -1,0 +1,16 @@
+export default {
+  "MoveNorthEvent": ["ArrowUp", "k"],
+  "MoveSouthEvent": ["ArrowDown", "j"],
+  "MoveEastEvent": ["ArrowRight", "l"],
+  "MoveWestEvent": ["ArrowLeft", "h"],
+  "MoveNorthWestEvent": ["y"],
+  "MoveNorthEastEvent": ["u"],
+  "MoveSouthWestEvent": ["b"],
+  "MoveSouthEastEvent": ["n"],
+  "SlotSelect1Event": ["1"],
+  "SlotSelect2Event": ["2"],
+  "SlotSelect3Event": ["3"],
+  "SlotSelectNextEvent": ["Tab"],
+  "SlotUseEvent": [" "],
+  "SlotDropEvent": ["d"],
+}

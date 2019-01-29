@@ -1,0 +1,55 @@
+@font-face {
+  font-family: 'LastPriestess';
+  src: url('/assets/LastPriestess.ttf')  format('truetype');
+}
+
+@font-face {
+  font-family: 'MicroStyle';
+  src: url('/assets/MicroStyle.ttf')  format('truetype');
+}
+
+html {
+  background: #111;
+  font-family: 'MicroStyle';
+  color: white;
+  font-size: 32px;
+  line-height: 32px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  position: relative;
+  display: inline-block;
+}
+
+#message {
+  border-top: solid 4px #3e3635;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  min-height: 64px;
+}
+
+.message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #eee;
+  padding: 12px;
+  width: 400px;
+  border: solid 2px #282b35;
+}
+
+.warning {
+  color: #fba2a2;
+}
+
+.hint {
+  color: #8e8ee4;
+}
+
+p {
+  margin-top: 0;
+}
