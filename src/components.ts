@@ -1,5 +1,6 @@
 import { Game, Component, Entity, Event, Script } from "./engine";
 import { Sprites } from "./sprites";
+import { Channel } from "./messages";
 
 export class Position extends Component {
   constructor(public x: number, public y: number) {
@@ -66,14 +67,21 @@ export class Blood extends Component {
     super();
   }
 
-  change(delta: number) {
+  change(delta: number): number {
+    let current = this.current;
     this.current += delta;
     this.current = Math.min(this.current, this.capacity);
     this.current = Math.max(this.current, 0);
+    let amount = current - this.current;
+    return amount;
   }
 
   reset() {
     this.current = this.capacity;
+  }
+
+  isEmpty(): boolean {
+    return this.current === 0;
   }
 }
 
@@ -133,12 +141,6 @@ export class Layer extends Component {
   }
 }
 
-export class LightSource extends Component {
-  constructor(public radius: number) {
-    super();
-  }
-}
-
 export class Name extends Component {
   constructor(public value: string) {
     super();
@@ -156,3 +158,31 @@ export class Openable extends Component {
     super();
   }
 }
+
+export class Energy extends Component {
+  value = 0;
+
+  constructor(public speed: number) {
+    super();
+  }
+
+  charge() {
+    this.value += this.speed;
+  }
+
+  reset() {
+    this.value = 0;
+  }
+}
+
+export class Message extends Component {
+  constructor(
+    public value: string,
+    public channel: Channel,
+  ) {
+    super();
+  }
+}
+
+export class Mobile extends Component {}
+export class Attackable extends Component {}

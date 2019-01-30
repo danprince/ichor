@@ -1,17 +1,27 @@
 import { Game, Entity, Handler } from "./engine";
-import { Sprite, Animation, Position, FX, Layer } from "./components";
+import { Sprite, Animation, Position, FX, Layer, Mobile } from "./components";
 import { Sprites } from "./sprites";
+import { requestAnimationLoop } from "./utils";
+import * as Events from "./events";
+import config from "./config";
 
-const SHEET_COLUMNS = 10;
-const SPRITE_WIDTH = 16;
-const SPRITE_HEIGHT = 16;
-const TILE_WIDTH = 48;
-const TILE_HEIGHT = 48;
-const ANIMATION_TICK = 1000;
-const RESOLUTION = window.devicePixelRatio;
+const VIEWPORT_WIDTH = config["viewport.width"];
+const VIEWPORT_HEIGHT = config["viewport.height"];
+const SHEET_COLUMNS = config["spritesheet.columns"];
+const SHEET_ROWS = config["spritesheet.rows"];
+const SPRITE_WIDTH = config["spritesheet.spriteWidth"];
+const SPRITE_HEIGHT = config["spritesheet.spriteHeight"];
+const TILE_WIDTH = config["renderer.tileWidth"];
+const TILE_HEIGHT = config["renderer.tileHeight"];
+const ANIMATION_SPEED = config["renderer.animationSpeed"];
 
-const VIEWPORT_WIDTH = 11;
-const VIEWPORT_HEIGHT = 11;
+const RESOLUTION: number = (
+  config["renderer.resolution"] || window.devicePixelRatio
+);
+
+const SPRITE_URL: string = (
+  config["spritesheet.url"] || require("../assets/sprites.png")
+);
 
 export class Renderer extends Handler {
   sprites = new Image();
@@ -21,42 +31,72 @@ export class Renderer extends Handler {
 
   constructor() {
     super();
-    this.sprites.src = require("../assets/sprites.png");
+    this.sprites.src = SPRITE_URL;
     this.canvas.width = VIEWPORT_WIDTH * TILE_WIDTH * RESOLUTION;
     this.canvas.height = VIEWPORT_HEIGHT * TILE_HEIGHT * RESOLUTION;
     this.canvas.style.width = `${VIEWPORT_WIDTH * TILE_WIDTH}px`;
     this.canvas.style.height = `${VIEWPORT_HEIGHT * TILE_HEIGHT}px`;
     this.ctx.scale(RESOLUTION, RESOLUTION);
     this.ctx.imageSmoothingEnabled = false;
-    this.ctx.font = "32px MicroStyle";
+    this.ctx.font = "32px TinyUnicode";
   }
 
   get width() { return this.canvas.width; };
   get height() { return this.canvas.height; };
 
   StartEvent() {
-    this.loop();
-    setInterval(this.animate, 500);
+    requestAnimationLoop(this.loop);
+    requestAnimationLoop(this.animate, ANIMATION_SPEED);
   }
 
   PauseEvent() {
     this.running = !this.running;
   }
 
+  TipShowEvent(event: Events.TipShowEvent) {
+    let element = document.getElementById("tip");
+    let { x, y } = this.worldToScreen(event.x + 0.5, event.y + 1);
+    element.style.left = `${x}px`;
+    element.style.top = `${y}px`;
+    element.innerHTML = event.message;
+    element.classList.remove("hide");
+  }
+
+  TipHideEvent(event: Events.TipHideEvent) {
+    let element = document.getElementById("tip");
+    element.classList.add("hide");
+  }
+
+  CanvasClickEvent(event: Events.CanvasClickEvent) {
+    let { x, y } = this.screenToWorld(event.x, event.y);
+    this.game.post(new Events.GridClickEvent(x, y));
+  }
+
+  CanvasHoverEvent(event: Events.CanvasHoverEvent) {
+    let { x, y } = this.screenToWorld(event.x, event.y);
+    this.game.post(new Events.GridHoverEvent(x, y));
+  }
+
+  screenToWorld(x: number, y: number) {
+    return { x: x / TILE_WIDTH, y: y / TILE_HEIGHT };
+  }
+
+  worldToScreen(x: number, y: number) {
+    return { x: x * TILE_WIDTH, y: y * TILE_HEIGHT };
+  }
+
   animate = () => {
-    for (let entity of this.game.findEntities(Animation)) {
+    for (let entity of this.game.findEntitiesWith(Animation)) {
       entity.map(Animation, animation => animation.step());
     }
   }
 
   loop = () => {
-    requestAnimationFrame(this.loop);
-
     if (this.running) {
       this.render(this.game);
     }
 
-    for (let entity of this.game.findEntities(FX)) {
+    for (let entity of this.game.findEntitiesWith(FX)) {
       if (entity.get(FX).hasFinished()) {
         this.game.removeEntity(entity);
       }
@@ -83,22 +123,19 @@ export class Renderer extends Handler {
     this.renderSprite(Sprites.TileGrey, 0, 2);
     this.renderSprite(Sprites.TileGrey, 0, 3);
     this.renderSprite(Sprites.TileSelected, 0, 1);
-
     this.renderSprite(Sprites.FlaskBlood, 0, 1);
     this.ctx.restore();
   }
 
   renderTiles(game: Game) {
     for (let [x, y, tile] of game.tiles) {
-      if (tile.seen) {
-        this.renderSprite(tile.type.sprite, x, y);
-      }
+      this.renderSprite(tile.type.sprite, x, y);
     }
   }
 
   renderLight(game: Game) {
     for (let [x, y, tile] of game.tiles) {
-      if (tile.seen && tile.light < 0.5) {
+      if (tile.visible === false) {
         this.renderSprite(Sprites.Dark, x, y);
       }
     }
@@ -111,7 +148,7 @@ export class Renderer extends Handler {
   };
 
   renderEntities(game: Game) {
-    let entities = game.findEntities(Position);
+    let entities = game.findEntitiesWith(Position);
 
     // TODO: Don't need this every frame, only when entities are added
     // (or moved across layers).
@@ -122,9 +159,15 @@ export class Renderer extends Handler {
       let sprite = entity.get(Sprite);
       let animation = entity.get(Animation);
       let fx = entity.get(FX);
+      let mobile = entity.has(Mobile);
       let tile = game.getTile(pos.x, pos.y);
 
-      if (tile.light <= 0) {
+      // Skip mobile entities on tiles out of sight
+      if (tile.visible === false && mobile) {
+        continue;
+      }
+
+      if (sprite == null && animation == null && fx == null) {
         continue;
       }
 
@@ -156,10 +199,14 @@ export class Renderer extends Handler {
 
     this.ctx.drawImage(
       this.sprites,
-      sx * SPRITE_WIDTH, sy * SPRITE_HEIGHT,
-      SPRITE_WIDTH, SPRITE_HEIGHT,
-      x * TILE_WIDTH, y * TILE_HEIGHT,
-      TILE_WIDTH, TILE_HEIGHT,
+      sx * SPRITE_WIDTH,
+      sy * SPRITE_HEIGHT,
+      SPRITE_WIDTH,
+      SPRITE_HEIGHT,
+      x * TILE_WIDTH,
+      y * TILE_HEIGHT,
+      TILE_WIDTH,
+      TILE_HEIGHT,
     );
   }
 }

@@ -1,49 +1,14 @@
-import { uid, PriorityQueue } from "./utils";
+import { ConstructorType, PriorityQueue, uid } from "./utils";
 import { TileMap } from "./tiles";
-import * as config from "../config.json";
+import config from "./config";
 import * as Events from "./events";
 
-type Constructor<T> = {
-  new(...args: any[]): T;
-  name?: string;
-}
-
-type Registry<T> = {
-  [id: string]: Constructor<T>
-};
-
-type Module = {
-  handlers: Registry<Handler>,
-  events: Registry<Event>,
-  components: Registry<Component>,
-};
-
 export class Game {
-  registry: {
-    handlers: Registry<Handler>,
-    events: Registry<Event>,
-    components: Registry<Component>,
-  } = {
-    handlers: {},
-    events: {},
-    components: {},
-  };
-
-  handlers = new PriorityQueue<Handler>(
-    (a, b) => a.priority - b.priority
-  );
-
-  entities = new Map<number, Entity>();
-
+  handlers = new PriorityQueue<Handler>(Handler.sort);
+  entities: Entity[] = [];
   tiles: TileMap;
 
-  // Modules/plugins
-
-  register(module: Module) {
-    Object.assign(this.registry, module);
-  }
-
-  // Handlers
+  // Events + Handlers
 
   addHandler(handler: Handler) {
     this.handlers.add(handler);
@@ -55,8 +20,6 @@ export class Game {
     handler.detachFromGame();
   }
 
-  // Events
-
   post(event: Event) {
     let key = event.constructor.name;
     let tracing = config["debug.traceEvents"];
@@ -66,22 +29,23 @@ export class Game {
       console.log(event);
     }
 
-    try {
-      for (let handler of this.handlers) {
-        if (key in handler) {
-          if (tracing) console.group("Handler", handler.constructor.name);
-          handler[key](event);
-          if (tracing) console.groupEnd();
+    for (let handler of this.handlers) {
+      // Look for generic event handler method
+      if (handler["Event"]) {
+        handler["Event"](event);
+      }
+
+      // Look for specific method for handling this event
+      if (key in handler) {
+        if (tracing) {
+          console.group("Handler", handler.constructor.name);
         }
 
-        if (handler["Event"]) {
-          handler["Event"](event);
+        handler[key](event);
+
+        if (tracing) {
+          console.groupEnd();
         }
-      }
-    } catch (err) {
-      if (tracing) {
-        console.groupEnd();
-        throw err;
       }
     }
 
@@ -90,24 +54,38 @@ export class Game {
     }
   }
 
+
   // Entities
 
-  findEntity(id: number): Entity {
-    return this.entities.get(id);
+  addEntity(entity: Entity) {
+    this.entities.push(entity);
   }
 
-  findEntities(...componentClasses: Constructor<Component>[]): Entity[] {
+  removeEntity(entity: Entity) {
+    this.entities = this.entities.filter(other => other !== entity);
+  }
+
+  findEntityById(id: number): Entity {
+    return this.entities.find(entity => entity.id === id);
+  }
+
+  findEntityByTag(tag: string): Entity {
+    return this.entities.find(entity => entity.tags.has(tag));
+  }
+
+  findEntity(fn: (entity: Entity) => boolean): Entity | undefined {
+    return this.entities.find(fn);
+  }
+
+  findEntities(fn: (entity: Entity) => boolean): Entity[] {
+    return this.entities.filter(fn);
+  }
+
+  findEntitiesWith(...componentClasses: ConstructorType<Component>[]): Entity[] {
     let entities = [...this.entities.values()];
     return entities.filter(entity => entity.has(...componentClasses));
   }
 
-  addEntity(entity: Entity) {
-    this.entities.set(entity.id, entity);
-  }
-
-  removeEntity(entity: Entity) {
-    this.entities.delete(entity.id);
-  }
 
   // Tiles
 
@@ -124,8 +102,12 @@ export class Event {
 }
 
 export class Handler {
-  game: Game;
-  priority = 0;
+  protected game: Game;
+  private priority = 0;
+
+  static sort(a: Handler, b: Handler) {
+    return a.priority - b.priority;
+  }
 
   attachToGame(game: Game) {
     this.game = game;
@@ -138,7 +120,11 @@ export class Handler {
 
 export class Entity {
   public id = uid();
-  private components: { [key: string]: any } = {};
+  public tags = new Set<string>();
+
+  private components: {
+    [key: string]: Component
+  } = {};
 
   static with(...components: Component[]) {
     let entity = new Entity();
@@ -146,11 +132,7 @@ export class Entity {
     return entity;
   }
 
-  static query(...componentClasses: Constructor<Component>[]) {
-    return entity => entity.has(...componentClasses);
-  }
-
-  get<T>(componentClass: Constructor<T>): T {
+  get<T>(componentClass: ConstructorType<T>): T {
     return this.components[componentClass.name] as unknown as T;
   }
 
@@ -160,24 +142,36 @@ export class Entity {
     }
   }
 
-  remove(...componentClasses: Constructor<Component>[]) {
+  remove(...componentClasses: ConstructorType<Component>[]) {
     for (let componentClass of componentClasses) {
       delete this.components[componentClass.name];
     }
   }
 
-  has(...componentClasses: Constructor<any>[]): boolean {
+  has(...componentClasses: ConstructorType<any>[]): boolean {
     return componentClasses.every(componentClass => {
       return componentClass.name in this.components;
     });
   }
 
-  map<T>(componentClass: Constructor<T>, fn: (component: T) => any): this {
+  map<T>(componentClass: ConstructorType<T>, fn: (component: T) => any): this {
     if (this.has(componentClass)) {
       fn(this.get(componentClass));
     }
 
     return this;
+  }
+
+  addTag(tag: string) {
+    this.tags.add(tag);
+  }
+
+  hasTag(tag: string): boolean {
+    return this.tags.has(tag);
+  }
+
+  removeTag(tag: string) {
+    this.tags.delete(tag);
   }
 }
 
@@ -185,11 +179,10 @@ export class Component {
 
 }
 
-export type Script<Events = typeof Events> = {
-  [Name in keyof Events]?: (
+export type Script = {
+  [Name in keyof typeof Events]?: (
     self: Entity,
-    // https://stackoverflow.com/questions/54426594/get-instance-type-from-constructor-type
-    event: Event,
+    event: InstanceType<typeof Events[Name]>,
     game: Game
   ) => void;
-}
+};

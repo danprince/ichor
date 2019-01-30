@@ -9,10 +9,8 @@ export enum Sprites {
 
   Player = 20,
   Priest = 22,
-  Brute = 24,
-  Rat = 26,
-  Monk = 28,
-  Ghost = 30,
+  Rat = 24,
+  Ghost = 26,
 
   Torch = 40,
   Barrel = 42,

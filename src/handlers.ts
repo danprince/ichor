@@ -1,11 +1,13 @@
+import { PermissiveFov } from "permissive-fov";
 import { Event, Entity, Handler, Game } from "./engine";
 import { Sprites } from "./sprites";
 import * as Events from "./events";
 import * as Components from "./components";
+import config from "./config";
 
 export class ScriptingHandler extends Handler {
   Event(event: Event) {
-    let entities = this.game.findEntities(Components.Scripts);
+    let entities = this.game.findEntitiesWith(Components.Scripts);
 
     for (let entity of entities) {
 
@@ -38,7 +40,16 @@ export class ControlsHandler extends Handler {
     this.element.addEventListener("click", event => {
       let rect = this.element.getBoundingClientRect();
 
-      this.game.post(new Events.ClickEvent(
+      this.game.post(new Events.CanvasClickEvent(
+        event.clientX - rect.left,
+        event.clientY - rect.top,
+      ));
+    });
+
+    this.element.addEventListener("mousemove", event => {
+      let rect = this.element.getBoundingClientRect();
+
+      this.game.post(new Events.CanvasHoverEvent(
         event.clientX - rect.left,
         event.clientY - rect.top,
       ));
@@ -50,14 +61,20 @@ export class ControlsHandler extends Handler {
       let keys = this.bindings[name];
 
       if (keys.includes(event.name)) {
-        let event = new Events[name];
-        this.game.post(event);
+        let Event = Events[name];
+        this.game.post(new Event());
       }
     }
   }
 }
 
 export class MovementHandler extends Handler {
+  EntityMoveByEvent(event: Events.EntityMoveByEvent) {
+    let { entity, x, y } = event;
+    let origin = entity.get(Components.Position);
+    this.game.post(new Events.EntityMoveEvent(entity, origin.x + x, origin.y + y));
+  }
+
   EntityMoveEvent(event: Events.EntityMoveEvent) {
     let { entity, x, y } = event;
     let origin = entity.get(Components.Position);
@@ -76,7 +93,7 @@ export class MovementHandler extends Handler {
     }
 
     let entitiesOnTile = this.game
-      .findEntities(Components.Position)
+      .findEntitiesWith(Components.Position)
       .filter(entity => entity.get(Components.Position).is(x, y));
 
     for (let target of entitiesOnTile) {
@@ -125,7 +142,14 @@ export class DoorHandler extends Handler {
   }
 }
 
-export class LightingHandler extends Handler {
+export class VisionHandler extends Handler {
+  // TODO: Remove hardcoded map dimensions
+  fov = new PermissiveFov(
+    11,
+    11,
+    (x, y) => this.game.getTile(x, y).type.transparent
+  );
+
   StartEvent(event: Events.StartEvent) {
     this.update();
   }
@@ -135,41 +159,90 @@ export class LightingHandler extends Handler {
   }
 
   update() {
-    let entities = this.game.findEntities(
-      Components.LightSource,
-      Components.Position
-    );
+    let player = this.game.findEntityByTag("player");
+    let { x, y } = player.get(Components.Position);
+    let radius = 5;
 
     for (let [x, y, tile] of this.game.tiles) {
-      tile.light = 0;
-
-      for (let entity of entities) {
-        let pos = entity.get(Components.Position);
-        let light = entity.get(Components.LightSource);
-        let value = 1 - (pos.distance(x, y) / light.radius);
-        value = Math.min(value, 1);
-        value = Math.max(value, 0);
-        tile.light += value;
-
-        if (value > 0) {
-          tile.seen = true;
-        }
-      }
+      tile.visible = false;
     }
+
+    this.fov.compute(x, y, radius, (x, y) => {
+      let tile = this.game.getTile(x, y);
+      tile.visible = true;
+    });
   }
 }
 
 export class CombatHandler extends Handler {
   EntityTouchEvent(event: Events.EntityTouchEvent) {
     let { entity, target } = event;
-    // If target is hostile, send AttackEvent
+
+    // TODO: Better test for whether a target is attackable.
+    if (entity.hasTag("player") && target.has(Components.Attackable)) {
+      this.game.post(new Events.PlayerAttackEvent(target));
+    }
+  }
+
+  PlayerAttackEvent(event: Events.PlayerAttackEvent) {
+    // TODO: Calculate how much damage the player will do to this target.
+    let dmg = 1;
+
+    let message = `You did ${dmg} damage to it!`;
+
+    if (event.target.has(Components.Name)) {
+      let name = event.target.get(Components.Name).value;
+      message = `You did ${dmg} damage to the ${name.toLowerCase()}!`;
+    }
+
+    let player = this.game.findEntityByTag("player");
+    this.game.post(new Events.DealDamageEvent(event.target, player, dmg));
+    this.game.post(new Events.MessageEvent(message, "action"));
+  }
+}
+
+export class DamageHandler extends Handler {
+  DealDamageEvent(event: Events.DealDamageEvent) {
+    let { entity, dealer, amount } = event;
+    let blood = entity.get(Components.Blood);
+
+    if (blood) {
+      let damage = blood.change(-amount);
+
+      // Update the event to show how much damage was actually done.
+      event.amount = damage;
+
+      this.game.post(new Events.DealtDamageEvent(entity, dealer, damage));
+
+      if (blood.isEmpty()) {
+        this.game.post(new Events.EntityDestroyEvent(entity));
+      }
+    }
   }
 }
 
 export class MessagingHandler extends Handler {
+  constructor(private element: HTMLElement) {
+    super();
+  }
+
+  MessageEvent(event: Events.MessageEvent) {
+    let node = document.createElement("div");
+    node.classList.add("message");
+    node.setAttribute("data-channel", event.channel);
+    node.innerHTML = event.text;
+    this.element.appendChild(node);
+    this.element.scrollTo(0, 0);
+  }
+
   EntityTouchEvent(event: Events.EntityTouchEvent) {
     let { entity, target } = event;
-    // If target has a message, add it to the queue
+
+    let message = target.get(Components.Message);
+
+    if (entity.hasTag("player") && message) {
+      this.game.post(new Events.MessageEvent(message.value, message.channel));
+    }
   }
 }
 
@@ -194,9 +267,10 @@ export class DestructionHandler extends Handler {
         entity.get(Components.Position),
       );
 
-      this.game.removeEntity(entity);
       this.game.addEntity(corpse);
     }
+
+    this.game.removeEntity(entity);
   }
 }
 
@@ -205,6 +279,7 @@ export class TurnHandler extends Handler {
 
   Event(event: Event) {
     switch (event.constructor) {
+      // TODO: Don't waste a turn if the player couldn't actually do that
       case Events.MoveNorthEvent:
       case Events.MoveSouthEvent:
       case Events.MoveWestEvent:
@@ -213,10 +288,44 @@ export class TurnHandler extends Handler {
       case Events.MoveNorthEastEvent:
       case Events.MoveSouthWestEvent:
       case Events.MoveSouthEastEvent:
-      case Events.SlotDropEvent:
       case Events.SlotUseEvent:
         this.turns += 1;
         this.game.post(new Events.TurnEvent);
+    }
+  }
+}
+
+export class EnergyHandler extends Handler {
+  TurnEvent(event: Events.TurnEvent) {
+    let entities = this.game.findEntitiesWith(Components.Energy);
+
+    for (let entity of entities) {
+      entity.get(Components.Energy).charge();
+    }
+  }
+}
+
+export class AIHandler extends Handler {
+  TurnEvent(event: Events.TurnEvent) {
+    let entities = this.game.findEntitiesWith(
+      Components.Brain,
+      Components.Energy,
+    );
+
+    for (let entity of entities) {
+      let energy = entity.get(Components.Energy);
+
+      if (energy.value < 1) {
+        continue;
+      } else {
+        energy.reset();
+      }
+
+      if (entity.has(Components.Mobile, Components.Position)) {
+        let x = Math.round(Math.random() * 2) - 1;
+        let y = Math.round(Math.random() * 2) - 1;
+        this.game.post(new Events.EntityMoveByEvent(entity, x, y));
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
-How could we design a messaging system so that events could be sent directly to an entity? (e.g. how can we listen for only the blood events that affect the player?).
+# Design Notes
 
-Items
+## Items
 
 * Weapons (increase/affect melee damage)
 * Trinkets (passive effects)
@@ -10,42 +10,33 @@ Items
 Items can be dropped (d)
 Items can be used (Enter)
 
-Colouring system:
-* Yellow/gold glow - tutorial/help
+Items should probably be entities, so that we can manipulate them.
 
-Event Design
-============
+To make this into a demo, it needs:
+* UI layer
+* Enemy hostility
+* Map load event chain
+* Map spawn event chain
+* Tutorial
 
-KeyboardHandler -> posts KeyEvent
-MouseHandler -> posts MouseEvent
-ControlHandler -> converts KeyEvent into MovePlayerEvent
+## Backlog
+- [x] Messaging UI
+- [x] FOV
+- [ ] Combat
+- [ ] Camera
+- [ ] Items/slots
+- [ ] Containers
+- [ ] Prompt/dialog
+- [ ] Sounds
+- [ ] Level generation
+- [ ] Spells
+- [ ] Tutorial
+- [ ] Cursor/targeting
 
-PlayerMovementHandler -> converts MovePlayerEvent into MoveEntityEvent
-MovementHandler -> Listens to MoveEntityEvent and attempts to move entity
+Dungeon made up of a network of 11x11 rooms that can be connected on any side.
 
-When we need to target a square, remove the PlayerMovementHandler and switch it for a PlayerTargetHandler which converts MoveDirectionEvent into MoveEntityEvents for the cursor.
+Made some good progress on FOV, messages and the beginnings of combat and AI.
 
-# Flow for bump / interact / attack etc
+Want to move the HUD onto a separate canvas, so that it's easy to move it around the UI for different layouts (e.g. above the message log).
 
-CombatHandler(EntityTouchEvent) ->
-  Entity is hostile?
-    Yes -> AttackMeleeEvent
-    
-DialogueHandler(EntityTouchEvent) ->
-  Entity has dialogue?
-    Yes -> SendMessageEvent
-      
-DestructionHandler
-  (EntityTouchEvent) ->
-    Entity is destructible?
-      Yes -> DestroyEntityEvent
-
-  (DestroyEntity) ->
-    Entity is destructible?
-      Yes -> SpawnCorpseEvent
-      Entity has container ->
-        Yes -> SpawnItemEvent
-        
-# Combat
-How to handle hostility in combat?
-
+Want to work on connecting areas. How do we manage spawns between areas? The simplest way to start would be to just move everything from the last room into memory and load the new one into the game.

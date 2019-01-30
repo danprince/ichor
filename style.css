@@ -1,55 +1,93 @@
 @font-face {
-  font-family: 'LastPriestess';
-  src: url('/assets/LastPriestess.ttf')  format('truetype');
-}
-
-@font-face {
-  font-family: 'MicroStyle';
-  src: url('/assets/MicroStyle.ttf')  format('truetype');
+  /* Had to make a slight tweak to the font to vertically center it,
+     so it probably won't play well with other text etc. */
+  font-family: 'TinyUnicode';
+  src: url('/assets/TinyUnicode.ttf')  format('truetype');
 }
 
 html {
   background: #111;
-  font-family: 'MicroStyle';
+  font-family: 'TinyUnicode';
   color: white;
   font-size: 32px;
   line-height: 32px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  cursor: url(./assets/cursor.png) 13 6, auto;
 }
 
 #root {
   position: relative;
+  display: inline-flex;
+  flex-direction: row;
+}
+
+#viewport {
+  position: relative;
   display: inline-block;
 }
 
-#message {
-  border-top: solid 4px #3e3635;
-  padding: 8px 16px;
-  box-sizing: border-box;
-  min-height: 64px;
+#messages {
+  margin-left: 8px;
+  height: 300px;
+  width: 300px;
+  overflow-y: scroll;
 }
 
-.message {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: #eee;
-  padding: 12px;
-  width: 400px;
-  border: solid 2px #282b35;
+#log {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
 }
 
-.warning {
+#log .message {
+  line-height: 24px;
+  opacity: 0.6;
+}
+
+#log .message:last-child {
+  opacity: 1;
+}
+
+.message[data-channel="info"] {
+  color: white;
+}
+
+.message[data-channel="help"] {
+  color: #96e48e;
+}
+
+.message[data-channel="warning"] {
   color: #fba2a2;
 }
 
-.hint {
+.message[data-channel="action"] {
   color: #8e8ee4;
 }
 
-p {
-  margin-top: 0;
+.tip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 8px;
+  pointer-events: none;
+  line-height: 24px;
+  padding-bottom: 0;
+  padding-top: 4px;
+  transform: translateX(-50%);
+}
+
+.tip.hide {
+  display: none;
+}
+
+kbd {
+  font-family: inherit;
+  border: solid 2px;
+  border-radius: 4px;
+  padding: 0 4px;
+  line-height: 18px;
+  display: inline-block;
+  color: white;
 }

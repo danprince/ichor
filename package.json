@@ -8,10 +8,11 @@
     "clean": "rm -r .cache dist"
   },
   "devDependencies": {
-    "typescript": "^3.2.4",
-    "parcel-bundler": "^1.11.0"
+    "parcel-bundler": "^1.11.0",
+    "typescript": "^3.2.4"
   },
   "dependencies": {
+    "permissive-fov": "^2.0.0"
   },
   "browserslist": [
     "last 1 Chrome versions"

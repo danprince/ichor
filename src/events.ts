@@ -1,5 +1,6 @@
 import { Event, Entity } from "./engine";
 import { Tile } from "./tiles";
+import { Channel } from "./messages";
 
 export class StartEvent extends Event {}
 export class TurnEvent extends Event {}
@@ -27,17 +28,50 @@ export class KeyDownEvent extends Event {
   }
 }
 
-export class ClickEvent extends Event {
+export class CanvasClickEvent extends Event {
   constructor(public x: number, public y: number) {
     super();
   }
 }
 
-export class HoverEvent extends Event {
+export class CanvasHoverEvent extends Event {
   constructor(public x: number, public y: number) {
     super();
   }
 }
+
+export class GridClickEvent extends Event {
+  constructor(public x: number, public y: number) {
+    super();
+  }
+}
+
+export class GridHoverEvent extends Event {
+  silent = true;
+
+  constructor(public x: number, public y: number) {
+    super();
+  }
+}
+
+export class CursorEnterEvent extends Event {
+  constructor(
+    public x: number,
+    public y: number,
+  ) {
+    super();
+  }
+}
+
+export class CursorExitEvent extends Event {
+  constructor(
+    public x: number,
+    public y: number,
+  ) {
+    super();
+  }
+}
+
 export class TileBlockEvent extends Event {
   constructor(
     public entity: Entity,
@@ -119,6 +153,69 @@ export class EntityMoveEvent extends Event {
     public x: number,
     public y: number,
   ) {
+    super();
+  }
+}
+
+export class EntityMoveByEvent extends Event {
+  constructor(
+    public entity: Entity,
+    public x: number,
+    public y: number,
+  ) {
+    super();
+  }
+}
+
+export class MessageEvent extends Event {
+  constructor(
+    public text: string,
+    public channel: Channel = "info"
+  ) {
+    super();
+  }
+}
+
+export class PlayerAttackEvent extends Event {
+  constructor(
+    public target: Entity
+  ) {
+    super();
+  }
+}
+
+export class DealDamageEvent extends Event {
+  constructor(
+    public entity: Entity,
+    public dealer: Entity,
+    public amount: number
+  ) {
+    super();
+  }
+}
+
+export class DealtDamageEvent extends Event {
+  constructor(
+    public entity: Entity,
+    public dealer: Entity,
+    public amount: number
+  ) {
+    super();
+  }
+}
+
+export class TipShowEvent extends Event {
+  constructor(
+    public x: number,
+    public y: number,
+    public message: string
+  ) {
+    super();
+  }
+}
+
+export class TipHideEvent extends Event {
+  constructor() {
     super();
   }
 }

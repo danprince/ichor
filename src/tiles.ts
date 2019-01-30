@@ -3,12 +3,13 @@ import { Sprites } from "./sprites";
 export type Tile = {
   type: TileType,
   light: number,
-  seen: boolean,
+  visible: boolean,
 };
 
 export type TileType = {
   sprite: number,
   walkable: boolean,
+  transparent: boolean,
 };
 
 export type Legend = {
@@ -19,25 +20,29 @@ export let Tiles = {
   Nothing: {
     sprite: Sprites.None,
     walkable: false,
+    transparent: true,
   },
   Floor: {
     sprite: Sprites.Floor,
     walkable: true,
+    transparent: true,
   },
   Wall: {
     sprite: Sprites.Wall,
     walkable: false,
+    transparent: false,
   },
   WallTop: {
     sprite: Sprites.WallTop,
     walkable: false,
+    transparent: false,
   },
 };
 
 export const EMPTY_TILE: Tile = Object.freeze({
-  light: 0,
+  light: 1,
   type: Tiles.Nothing,
-  seen: false,
+  visible: false,
 });
 
 export class TileMap {
@@ -91,8 +96,8 @@ export class TileMap {
 
         map.tiles[x + y * height] = {
           type,
-          light: 0,
-          seen: false,
+          light: 1,
+          visible: false,
         };
       }
     }
