@@ -4,13 +4,36 @@ import * as Events from "./events";
 import * as Objects from "./objects";
 
 let Templates: { [id: string]: Template } = {
+  Entrance: {
+    type: "start",
+    preset: true,
+    spawn: [5, 9],
+    exits: Exits.None,
+    tiles: `
+      ##=======##
+      #=.......=#
+      #.........#
+      #.........#
+      =.........=
+      ...........
+      #.........#
+      #.........#
+      #.........#
+      ##.......##
+      ===========
+    `,
+    setup(game) {
+      game.post(new Events.MessageEvent(``));
+      game.addEntity(Objects.Portal(5, 2));
+    }
+  },
   Tutorial1: {
     type: "start",
     preset: true,
     spawn: [1, 9],
     exits: Exits.East,
     tiles: `
-      ===========
+      #=========#
       #.........#
       #.##=#===.#
       #.#=.=....#
@@ -95,8 +118,9 @@ let Templates: { [id: string]: Template } = {
 
 let nexus = new Dungeon(3, 3);
 
-nexus.setRoom(0, 0, Dungeon.roomFromTemplate(Templates.Tutorial1, legend));
-nexus.setRoom(1, 0, Dungeon.roomFromTemplate(Templates.Tutorial2, legend));
-nexus.setRoom(1, 1, Dungeon.roomFromTemplate(Templates.Tutorial3, legend));
+nexus.setRoom(0, 0, Dungeon.roomFromTemplate(Templates.Entrance, legend));
+nexus.setRoom(1, 0, Dungeon.roomFromTemplate(Templates.Tutorial1, legend));
+nexus.setRoom(2, 0, Dungeon.roomFromTemplate(Templates.Tutorial2, legend));
+nexus.setRoom(2, 1, Dungeon.roomFromTemplate(Templates.Tutorial3, legend));
 
 export default nexus;

@@ -5,7 +5,6 @@ import { Dungeon } from "./dungeon";
 
 export class StartEvent extends Event {}
 export class TurnEvent extends Event {}
-export class PauseEvent extends Event {}
 
 export class MoveNorthEvent extends Event {}
 export class MoveSouthEvent extends Event {}
@@ -22,38 +21,6 @@ export class SlotSelect3Event extends Event {}
 export class SlotSelectNextEvent extends Event {}
 export class SlotUseEvent extends Event {}
 export class SlotDropEvent extends Event {}
-
-export class KeyDownEvent extends Event {
-  constructor(public name: string) {
-    super();
-  }
-}
-
-export class CanvasClickEvent extends Event {
-  constructor(public x: number, public y: number) {
-    super();
-  }
-}
-
-export class CanvasHoverEvent extends Event {
-  constructor(public x: number, public y: number) {
-    super();
-  }
-}
-
-export class GridClickEvent extends Event {
-  constructor(public x: number, public y: number) {
-    super();
-  }
-}
-
-export class GridHoverEvent extends Event {
-  silent = true;
-
-  constructor(public x: number, public y: number) {
-    super();
-  }
-}
 
 export class CursorEnterEvent extends Event {
   constructor(

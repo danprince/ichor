@@ -45,25 +45,25 @@ export let Player: Script = {
 }
 
 export let Cursor: Script = {
-  GridHoverEvent(self, event, game) {
-    let x = Math.floor(event.x);
-    let y = Math.floor(event.y);
-    let pos = self.get(Components.Position);
+  //GridHoverEvent(self, event, game) {
+  //  let x = Math.floor(event.x);
+  //  let y = Math.floor(event.y);
+  //  let pos = self.get(Components.Position);
 
-    // Cursor is already here, no need to update.
-    if (pos.is(x, y)) {
-      return;
-    }
+  //  // Cursor is already here, no need to update.
+  //  if (pos.is(x, y)) {
+  //    return;
+  //  }
 
-    game.post(new Events.CursorExitEvent(pos.x, pos.y));
-    game.post(new Events.CursorEnterEvent(x, y));
+  //  game.post(new Events.CursorExitEvent(pos.x, pos.y));
+  //  game.post(new Events.CursorEnterEvent(x, y));
 
-    // Skip the usual entity movement stuff and update position directly.
-    self.map(Components.Position, pos => {
-      pos.x = x;
-      pos.y = y;
-    });
-  },
+  //  // Skip the usual entity movement stuff and update position directly.
+  //  self.map(Components.Position, pos => {
+  //    pos.x = x;
+  //    pos.y = y;
+  //  });
+  //},
 
   CursorExitEvent(self, event: Events.CursorExitEvent, game) {
     game.post(new Events.TipHideEvent);

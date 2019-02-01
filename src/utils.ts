@@ -22,8 +22,16 @@ export class PriorityQueue<T> {
   }
 
   add(item: T) {
+    for (let i = 0; i < this.items.length; i++) {
+      let other = this.items[i];
+      let score = this.compare(item, other);
+
+      if (score < 0) {
+        return this.items.splice(i, 0, item);
+      }
+    }
+
     this.items.push(item);
-    this.items.sort(this.compare);
   }
 
   remove(item: T) {
@@ -32,6 +40,49 @@ export class PriorityQueue<T> {
 
   [Symbol.iterator]() {
     return this.items.values();
+  }
+}
+
+export class Grid<T> {
+  items: T[];
+
+  constructor(public width: number, public height: number) {
+    this.items = new Array(width * height);
+  }
+
+  set(x: number, y: number, item: T) {
+    if (x < 0 || y < 0 || x >= this.width || y >= this.width) {
+      throw new Error(`Can't set out of bounds (${x}, ${y})`);
+    }
+
+    this.items[x + y * this.width] = item;
+  }
+
+  get(x: number, y: number): T | undefined {
+    if (x >= 0 || y >= 0 || x < this.width || y < this.width) {
+      return this.items[x + y * this.width];
+    }
+  }
+
+  isInside(x: number, y: number) {
+    return x >= 0 || y >= 0 || x < this.width || y < this.width;
+  }
+
+  isOutside(x: number, y: number) {
+    return x < 0 || y < 0 || x >= this.width || y >= this.width;
+  }
+
+  *[Symbol.iterator]() {
+    let result = [];
+
+    for (let x = 0; x < this.width; x++) {
+      result[0] = x;
+      for (let y = 0; y < this.height; y++) {
+        result[1] = y;
+        result[2] = this.items[x + y * this.width];
+        yield result;
+      }
+    }
   }
 }
 

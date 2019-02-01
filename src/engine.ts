@@ -1,12 +1,12 @@
-import { ConstructorType, PriorityQueue, uid } from "./utils";
-import { TileMap } from "./tiles";
+import { ConstructorType, Grid, PriorityQueue, uid } from "./utils";
+import { Tile, TileMap } from "./tiles";
 import config from "./config";
 import * as Events from "./events";
 
 export class Game {
   private handlers = new PriorityQueue<Handler>(Handler.sort);
   private entities: Entity[] = [];
-  tiles: TileMap;
+  tiles: Grid<Tile>;
 
   // Events + Handlers
 
@@ -100,7 +100,7 @@ export class Game {
   // Tiles
 
   getTile(x: number, y: number) {
-    return this.tiles.at(x, y);
+    return this.tiles.get(x, y);
   }
 }
 
@@ -113,10 +113,10 @@ export class Event {
 
 export class Handler {
   protected game: Game;
-  private priority = 0;
+  protected priority = 0;
 
   static sort(a: Handler, b: Handler) {
-    return a.priority - b.priority;
+    return b.priority - a.priority;
   }
 
   attachToGame(game: Game) {

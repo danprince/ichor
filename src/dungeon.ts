@@ -1,7 +1,7 @@
 import PRNG from "prng";
 import { Entity, Game, Handler } from "./engine";
 import { Tile, TileMap, Legend } from "./tiles";
-import * as Rooms from "./rooms";
+import { Grid } from "./utils";
 
 export enum Exits {
   None = 0b0000,
@@ -26,7 +26,7 @@ export type Template = {
 export type Room = {
   loaded: boolean;
   template: Template;
-  tiles: TileMap;
+  tiles: Grid<Tile>;
   entities: Entity[];
 };
 
@@ -47,6 +47,7 @@ export class Dungeon {
     this.rooms = new Array(width * height);
   }
 
+  // TODO: Use Grid<Room>
   rooms: Room[] = [];
 
   getRoom(x: number, y: number): Room {

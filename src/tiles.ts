@@ -1,8 +1,8 @@
 import { Sprites } from "./sprites";
+import { Grid } from "./utils";
 
 export type Tile = {
   type: TileType,
-  light: number,
   visible: boolean,
 };
 
@@ -10,6 +10,7 @@ export type TileType = {
   sprite: number,
   walkable: boolean,
   transparent: boolean,
+  color: string,
 };
 
 export type Legend = {
@@ -21,63 +22,31 @@ export let Tiles = {
     sprite: Sprites.None,
     walkable: false,
     transparent: true,
+    color: "transparent",
   },
   Floor: {
     sprite: Sprites.Floor,
     walkable: true,
     transparent: true,
+    color: "#241f1d",
   },
   Wall: {
     sprite: Sprites.Wall,
     walkable: false,
     transparent: false,
+    color: "#3e3635",
   },
   WallTop: {
     sprite: Sprites.WallTop,
     walkable: false,
     transparent: false,
+    color: "#3e3635",
   },
 };
 
-export const EMPTY_TILE: Tile = Object.freeze({
-  light: 1,
-  type: Tiles.Nothing,
-  visible: false,
-});
-
+// Deprecated in favour of utils/Grid
 export class TileMap {
-  tiles: Tile[];
-
-  constructor(public width: number, public height: number) {
-    this.tiles = [];
-  }
-
-  at(x: number, y: number): Tile {
-    if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
-      return EMPTY_TILE;
-    }
-
-    return this.tiles[x + y * this.width] || EMPTY_TILE;
-  }
-
-  set(x: number, y: number, tile: Tile) {
-    this.tiles[x + y * this.width] = tile;
-  }
-
-  *[Symbol.iterator]() {
-    let cell = [];
-
-    for (let x = 0; x < this.width; x++) {
-      cell[0] = x;
-      for (let y = 0; y < this.height; y++) {
-        cell[1] = y;
-        cell[2] = this.at(x, y);
-        yield cell;
-      }
-    }
-  }
-
-  static load(src: string, legend: Legend): TileMap {
+  static load(src: string, legend: Legend): Grid<Tile> {
     let lines = src
       .split("\n")
       .map(line => line.trim())
@@ -85,7 +54,7 @@ export class TileMap {
 
     let height = lines.length;
     let width = lines[0].length;
-    let map = new TileMap(width, height);
+    let map = new Grid<Tile>(width, height);
 
     for (let y = 0; y < height; y++) {
       let line = lines[y];
@@ -94,11 +63,10 @@ export class TileMap {
         let char = line[x];
         let type = legend[char] || Tiles.Nothing;
 
-        map.tiles[x + y * height] = {
+        map.set(x, y, {
           type,
-          light: 1,
           visible: false,
-        };
+        });
       }
     }
 

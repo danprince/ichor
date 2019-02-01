@@ -76,3 +76,9 @@ export let Barrel = (x, y) => Entity.with(
   new Components.Layer(-1),
   new Components.Blocking,
 );
+
+export let Portal = (x, y) => Entity.with(
+  new Components.Position(x, y),
+  new Components.Animation(Sprites.Portal, 2),
+  new Components.Blocking,
+);

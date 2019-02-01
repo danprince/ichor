@@ -19,6 +19,7 @@ export enum Sprites {
   DoorOpen = 45,
   SignPost = 46,
   Well = 47,
+  Portal = 52,
 
   FlaskEmpty = 50,
   FlaskBlood = 51,
@@ -42,4 +43,6 @@ export enum Sprites {
   Number7 = 97,
   Number8 = 98,
   Number9 = 99,
+
+  Missing = 100,
 }

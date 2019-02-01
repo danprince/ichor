@@ -30,45 +30,6 @@ export class ScriptingHandler extends Handler {
   }
 }
 
-export class ControlsHandler extends Handler {
-  constructor(private bindings: any, private element: HTMLElement) {
-    super();
-
-    window.addEventListener("keydown", event => {
-      this.game.post(new Events.KeyDownEvent(event.key));
-    });
-
-    this.element.addEventListener("click", event => {
-      let rect = this.element.getBoundingClientRect();
-
-      this.game.post(new Events.CanvasClickEvent(
-        event.clientX - rect.left,
-        event.clientY - rect.top,
-      ));
-    });
-
-    this.element.addEventListener("mousemove", event => {
-      let rect = this.element.getBoundingClientRect();
-
-      this.game.post(new Events.CanvasHoverEvent(
-        event.clientX - rect.left,
-        event.clientY - rect.top,
-      ));
-    });
-  }
-
-  KeyDownEvent(event: Events.KeyDownEvent) {
-    for (let name in this.bindings) {
-      let keys = this.bindings[name];
-
-      if (keys.includes(event.name)) {
-        let Event = Events[name];
-        this.game.post(new Event());
-      }
-    }
-  }
-}
-
 export class MovementHandler extends Handler {
   EntityMoveByEvent(event: Events.EntityMoveByEvent) {
     let { entity, x, y } = event;
@@ -86,7 +47,7 @@ export class MovementHandler extends Handler {
     }
 
     // Blocked by the boundaries of the map
-    if (x < 0 || y < 0 || x >= this.game.tiles.width || y >= this.game.tiles.height) {
+    if (this.game.tiles.isOutside(x, y)) {
       return this.game.post(new Events.BoundsBlockEvent(entity, x, y));
     }
 
@@ -228,17 +189,8 @@ export class DamageHandler extends Handler {
 }
 
 export class MessagingHandler extends Handler {
-  constructor(private element: HTMLElement) {
+  constructor() {
     super();
-  }
-
-  MessageEvent(event: Events.MessageEvent) {
-    let node = document.createElement("div");
-    node.classList.add("message");
-    node.setAttribute("data-channel", event.channel);
-    node.innerHTML = event.text;
-    this.element.appendChild(node);
-    this.element.scrollTo(0, 0);
   }
 
   EntityTouchEvent(event: Events.EntityTouchEvent) {
@@ -286,6 +238,9 @@ export class TurnHandler extends Handler {
   Event(event: Event) {
     switch (event.constructor) {
       // TODO: Don't waste a turn if the player couldn't actually do that
+      // Take inspiration from Bob Nystrom's action system, where each actor
+      // Gets input before performing their action. The action can succeed,
+      // fail, or return an alternate action.
       case Events.MoveNorthEvent:
       case Events.MoveSouthEvent:
       case Events.MoveWestEvent:
@@ -444,9 +399,8 @@ export class DungeonHandler extends Handler {
     this.game.post(new Events.DungeonRoomExitEvent());
     this.game.post(new Events.DungeonRoomEnterEvent(newRoomX, newRoomY));
 
-    let position = entity.get(Components.Position);
-
     // Move player to corresponding entrance in the new room
+    let position = entity.get(Components.Position);
     if (x < 0) position.x = newRoom.tiles.width - 1;
     else if (y < 0) position.y = newRoom.tiles.height - 1;
     else if (x >= oldRoom.tiles.width) position.x = 0;

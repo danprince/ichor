@@ -68,10 +68,8 @@ https://www.rockpapershotgun.com/2016/03/04/making-of-spelunky/2/
 * Dungeon generator should work with a dungeon draft, not a real dungeon. The draft should be made of templates, not real room objects. Then we don't have to worry about legend etc.
 * Dungeon generator should have limits for how many of 1 type of room to generate. E.g. some presets should be unique.
 * Draft nodes still need the grid, otherwise it's tricky to tell which spots are free / where the adjacent nodes are. Probably want a graph traversal friendly interface for getting the links from each node, by inference from the map.
-* Time to create a grid utility that works as 2d array
 * Should forward all events that arrive at the player down to the items in their inventory.
 * Define actions that take an entity and the game state. Have an energy cost and can return alternate action.
-* Move ControlsHandler into a interface manager class and then handle shift * arrows for diagonals, click events, control mapping etc there.
 * Should have a central hub that includes the tutorial rooms, a graveyard etc
 * Move all templates for hub into separate file and have templates file just export a big list.
 * Still need to separate the UI onto separate canvases.
@@ -82,8 +80,9 @@ https://www.rockpapershotgun.com/2016/03/04/making-of-spelunky/2/
 * Onscreen prompt actions like tooltips (e.g. buy from shop etc)
 * Multi-tile entities?
 * Fountain of blood should run out and switch sprite.
-* Add a bloodworm monster
+* Add a bloodworm monster, add leech varieties
 * How would we theme areas of the dungeon? E.g. set style of walls and entities that spawn, not for one room, but for rooms all around. Early warning system as you come towards rooms with difficult encounters or special items.
+* Could rooms specify a preference for neighbouring rooms?
 * Could add portals for teleporting between rooms. This would allow linking disconnected pieces of map.
 * Floodfill the dungeon generator to make sure all paths are connected
 * Multiple endings based on what the "end" tile is? Could use the end tile to theme the rest of the dungeon?
@@ -93,10 +92,16 @@ https://www.rockpapershotgun.com/2016/03/04/making-of-spelunky/2/
 * Minimap should probably have a camera, so that you could play in a huge dungeon without issue.
 * Thinking a bit about saving again. Can't just save seed + entities because even tiny changes to the generator will mess up seeds. Need so many classes to implement serialization...
 * Need to bring back the registry to support saving properly.
-* Want to rework the renderer model to make a more generic renderer that can handle sprites fine.
+* Want to rework the renderer model to make a more generic renderer that can handle sprites fine. Bonus points if it supports upscaled rendering too.
 * Terrain types need a colour for the minimap to be able to handle them correctly.
 * Wondering about making FX a first class citizen, like entities are. Could make them a pure renderer concern and send them to the renderer via an event. Sounds good!
 * Could do more complex template stitching by getting the binary pattern for each cardinal direction (e.g. 111111111101111) shows a gap of 1 block. Would mean it would be possible to connect far more interesting templates together.
+* Could make the tilemap parser pluggable, to support autotiling etc.
+* Some kind of component that marks an entity as fixed, so that they are never unloaded and stored with a room?
+* How to prevent the "turn" event when an action was unsuccessful? E.g. walked into a wall.
+* How should the animation system work? The renderer shouldn't really know about the game entities.
+* Giving up on mouse support for now. Can revisit that later.
+* Could have a renderer mode that ignores animations / fx and only renders after turn events.
 
 ```
 // Going to be an enormous blob of JSON.
