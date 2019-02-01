@@ -2851,6 +2851,11 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
+lfsr@0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/lfsr/-/lfsr-0.0.3.tgz#a6d09885f56d2f30e6474f73d6e6ab2ab877ea86"
+  integrity sha1-ptCYhfVtLzDmR09z1uarKrh36oY=
+
 locate-path@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/locate-path/-/locate-path-2.0.0.tgz#2b568b265eec944c6d9c0de9c3dbbbca0354cd8e"
@@ -4128,6 +4133,13 @@ private@^0.1.6:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/private/-/private-0.1.8.tgz#2381edb3689f7a53d653190060fcf822d2f368ff"
   integrity sha512-VvivMrbvd2nKkiG38qjULzlc+4Vx4wm/whI9pQD35YrARNnhxeiRktSOhSukRLFNlzg6Br/cJPet5J/u19r/mg==
+
+prng@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/prng/-/prng-0.0.1.tgz#bc8bc17f236db893f3e841f825b5c3acfd68fbd4"
+  integrity sha1-vIvBfyNtuJPz6EH4JbXDrP1o+9Q=
+  dependencies:
+    lfsr "0.0.3"
 
 process-nextick-args@~2.0.0:
   version "2.0.0"

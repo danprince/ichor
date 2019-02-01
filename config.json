@@ -1,18 +1,17 @@
 {
-  "debug.traceEvents": true,
+  "debug.traceEvents": false,
   "debug.globals": true,
 
   "renderer.tileWidth": 48,
   "renderer.tileHeight": 48,
   "renderer.animationSpeed": 400,
+  "renderer.viewportWidth": 11,
+  "renderer.viewportHeight": 11,
 
   "spritesheet.rows": 10,
   "spritesheet.columns": 10,
   "spritesheet.spriteWidth": 16,
   "spritesheet.spriteHeight": 16,
-
-  "viewport.width": 11,
-  "viewport.height": 11,
 
   "controls.MoveNorth": ["ArrowUp", "k"],
   "controls.MoveSouth": ["ArrowDown", "j"],
@@ -27,5 +26,5 @@
   "controls.SlotSelect3": ["3"],
   "controls.SlotSelectNext": ["Tab"],
   "controls.SlotUse": [" "],
-  "controls.SlotDrop": ["d"],
+  "controls.SlotDrop": ["d"]
 }

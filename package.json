@@ -12,7 +12,8 @@
     "typescript": "^3.2.4"
   },
   "dependencies": {
-    "permissive-fov": "^2.0.0"
+    "permissive-fov": "^2.0.0",
+    "prng": "^0.0.1"
   },
   "browserslist": [
     "last 1 Chrome versions"

@@ -1,6 +1,7 @@
 import { Event, Entity } from "./engine";
 import { Tile } from "./tiles";
 import { Channel } from "./messages";
+import { Dungeon } from "./dungeon";
 
 export class StartEvent extends Event {}
 export class TurnEvent extends Event {}
@@ -65,6 +66,16 @@ export class CursorEnterEvent extends Event {
 
 export class CursorExitEvent extends Event {
   constructor(
+    public x: number,
+    public y: number,
+  ) {
+    super();
+  }
+}
+
+export class BoundsBlockEvent extends Event {
+  constructor(
+    public entity: Entity,
     public x: number,
     public y: number,
   ) {
@@ -216,6 +227,41 @@ export class TipShowEvent extends Event {
 
 export class TipHideEvent extends Event {
   constructor() {
+    super();
+  }
+}
+
+export class DungeonLoadEvent extends Event {
+  constructor(
+    public dungeon: Dungeon,
+  ) {
+    super();
+  }
+}
+
+export class DungeonEnterEvent extends Event {
+  constructor(
+    public roomX: number,
+    public roomY: number,
+  ) {
+    super();
+  }
+}
+
+export class DungeonExitEvent extends Event {
+  constructor(public dungeon: Dungeon) {
+    super();
+  }
+}
+
+export class DungeonRoomExitEvent extends Event {
+  constructor() {
+    super();
+  }
+}
+
+export class DungeonRoomEnterEvent extends Event {
+  constructor(public roomX: number, public roomY: number) {
     super();
   }
 }

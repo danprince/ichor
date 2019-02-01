@@ -5,14 +5,14 @@ import { requestAnimationLoop } from "./utils";
 import * as Events from "./events";
 import config from "./config";
 
-const VIEWPORT_WIDTH = config["viewport.width"];
-const VIEWPORT_HEIGHT = config["viewport.height"];
 const SHEET_COLUMNS = config["spritesheet.columns"];
 const SHEET_ROWS = config["spritesheet.rows"];
 const SPRITE_WIDTH = config["spritesheet.spriteWidth"];
 const SPRITE_HEIGHT = config["spritesheet.spriteHeight"];
 const TILE_WIDTH = config["renderer.tileWidth"];
 const TILE_HEIGHT = config["renderer.tileHeight"];
+const VIEWPORT_WIDTH = config["renderer.viewportWidth"];
+const VIEWPORT_HEIGHT = config["renderer.viewportHeight"];
 const ANIMATION_SPEED = config["renderer.animationSpeed"];
 
 const RESOLUTION: number = (

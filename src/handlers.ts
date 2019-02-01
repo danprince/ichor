@@ -1,6 +1,7 @@
 import { PermissiveFov } from "permissive-fov";
 import { Event, Entity, Handler, Game } from "./engine";
 import { Sprites } from "./sprites";
+import { Dungeon } from "./dungeon";
 import * as Events from "./events";
 import * as Components from "./components";
 import config from "./config";
@@ -82,6 +83,11 @@ export class MovementHandler extends Handler {
     // Entity is already at the target
     if (origin.is(x, y)) {
       return;
+    }
+
+    // Blocked by the boundaries of the map
+    if (x < 0 || y < 0 || x >= this.game.tiles.width || y >= this.game.tiles.height) {
+      return this.game.post(new Events.BoundsBlockEvent(entity, x, y));
     }
 
     let enterTile = this.game.getTile(x, y);
@@ -327,5 +333,123 @@ export class AIHandler extends Handler {
         this.game.post(new Events.EntityMoveByEvent(entity, x, y));
       }
     }
+  }
+}
+
+export class DungeonHandler extends Handler {
+  dungeon: Dungeon;
+
+  // Coordinates for currently loaded room
+  roomX: number;
+  roomY: number;
+
+  DungeonLoadEvent(event: Events.DungeonLoadEvent) {
+    this.dungeon = event.dungeon;
+
+    let start = this.dungeon.getStartPosition();
+    let room = this.dungeon.getRoom(start.x, start.y);
+    let player = this.game.findEntityByTag("player");
+
+    // Move the player to the spawn location
+    let position = player.get(Components.Position);
+    let [x, y] = room.template.spawn;
+    position.x = x;
+    position.y = y;
+
+    this.game.post(
+      new Events.DungeonRoomEnterEvent(start.x, start.y)
+    );
+  }
+
+  DungeonExitEvent(event: Events.DungeonExitEvent) {
+    // Move to some other screen to show achievements etc?
+  }
+
+  DungeonRoomExitEvent(event: Events.DungeonRoomExitEvent) {
+    let player = this.game.findEntityByTag("player");
+    let room = this.dungeon.getRoom(this.roomX, this.roomY);
+
+    // Remove the player (but keep a reference to their entity)
+    this.game.removeEntity(player);
+
+    // Move all the other entities from the game into the room
+    room.entities = this.game.removeAllEntities();
+
+    // Put the player back into the game
+    this.game.addEntity(player);
+
+    if (room.template.onExit) {
+      room.template.onExit(this.game);
+    }
+  }
+
+  DungeonRoomEnterEvent(event: Events.DungeonRoomEnterEvent) {
+    // Update the current room
+    this.roomX = event.roomX;
+    this.roomY = event.roomY;
+
+    let room = this.dungeon.getRoom(this.roomX, this.roomY);
+
+    // Load the room's tile map into the game.
+    this.game.tiles = room.tiles;
+
+    // If this is the first time we've entered the room, run it's setup
+    // function.
+    if (room.loaded === false) {
+      if (room.template.setup) {
+        room.template.setup(this.game);
+      }
+
+      if (room.template.preset === false) {
+        // TODO: Spawn appropriate entities in here based on what's
+        // already happened in this game.
+      }
+
+      room.loaded = true;
+    }
+
+    // Load any entities that were already stored in this room.
+    for (let entity of room.entities) {
+      this.game.addEntity(entity);
+    }
+
+    if (room.template.onEnter) {
+      room.template.onEnter(this.game);
+    }
+  }
+
+  BoundsBlockEvent(event: Events.BoundsBlockEvent) {
+    let { entity, x, y } = event;
+
+    // Regular entities can't move between rooms
+    if (!entity.hasTag("player")) return;
+
+    let oldRoomX = this.roomX;
+    let oldRoomY = this.roomY;
+    let newRoomX = this.roomX;
+    let newRoomY = this.roomY;
+
+    if (x < 0) newRoomX -= 1;
+    else if (y < 0) newRoomY -= 1;
+    else if (x >= this.game.tiles.width) newRoomX += 1;
+    else if (y >= this.game.tiles.height) newRoomY += 1;
+
+    let newRoom = this.dungeon.getRoom(newRoomX, newRoomY);
+    let oldRoom = this.dungeon.getRoom(oldRoomX, oldRoomY);
+
+    if (newRoom == null) {
+      return this.game.post(new Events.MessageEvent("You can't get through there"));
+    }
+
+    this.game.post(new Events.DungeonRoomExitEvent());
+    this.game.post(new Events.DungeonRoomEnterEvent(newRoomX, newRoomY));
+
+    let position = entity.get(Components.Position);
+
+    // Move player to corresponding entrance in the new room
+    if (x < 0) position.x = newRoom.tiles.width - 1;
+    else if (y < 0) position.y = newRoom.tiles.height - 1;
+    else if (x >= oldRoom.tiles.width) position.x = 0;
+    else if (y >= oldRoom.tiles.height) position.y = 0;
   }
 }

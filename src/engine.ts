@@ -4,8 +4,8 @@ import config from "./config";
 import * as Events from "./events";
 
 export class Game {
-  handlers = new PriorityQueue<Handler>(Handler.sort);
-  entities: Entity[] = [];
+  private handlers = new PriorityQueue<Handler>(Handler.sort);
+  private entities: Entity[] = [];
   tiles: TileMap;
 
   // Events + Handlers
@@ -65,6 +65,12 @@ export class Game {
     this.entities = this.entities.filter(other => other !== entity);
   }
 
+  removeAllEntities(): Entity[] {
+    let entities = this.entities;
+    this.entities = [];
+    return entities;
+  }
+
   findEntityById(id: number): Entity {
     return this.entities.find(entity => entity.id === id);
   }
@@ -84,6 +90,10 @@ export class Game {
   findEntitiesWith(...componentClasses: ConstructorType<Component>[]): Entity[] {
     let entities = [...this.entities.values()];
     return entities.filter(entity => entity.has(...componentClasses));
+  }
+
+  getAllEntities() {
+    return this.entities;
   }
 
 
