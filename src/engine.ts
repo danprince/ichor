@@ -1,12 +1,12 @@
 import { ConstructorType, Grid, PriorityQueue, uid } from "./utils";
-import { Tile, TileMap } from "./tiles";
+import { Tile } from "./tiles";
 import config from "./config";
 import * as Events from "./events";
 
 export class Game {
   private handlers = new PriorityQueue<Handler>(Handler.sort);
   private entities: Entity[] = [];
-  tiles: Grid<Tile>;
+  tiles: Grid<Tile> = new Grid<Tile>(0, 0);
 
   // Events + Handlers
 

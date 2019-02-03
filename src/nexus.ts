@@ -1,4 +1,5 @@
-import { Dungeon, Template, Exits } from "./dungeon";
+import { Dungeon, Template } from "./dungeon";
+import { NORTH, EAST, SOUTH, WEST } from "./directions";
 import { legend } from "./templates";
 import * as Events from "./events";
 import * as Objects from "./objects";
@@ -8,30 +9,32 @@ let Templates: { [id: string]: Template } = {
     type: "start",
     preset: true,
     spawn: [5, 9],
-    exits: Exits.None,
+    exits: 0,
     tiles: `
-      ##=======##
-      #=.......=#
-      #.........#
-      #.........#
-      =.........=
-      ...........
-      #.........#
-      #.........#
-      #.........#
-      ##.......##
-      ===========
+      %%-------%%
+      %-,,,,,,,-%
+      %,,,,,,,,,%
+      %,,,,,,,,,%
+      -,,,----,,-
+      ,,,,,,,,,,,
+      %,,,----,,%
+      %,,,,,,,,,%
+      %,,,,,,,,,%
+      %%,,,,,,,%%
+      -----------
     `,
     setup(game) {
       game.post(new Events.MessageEvent(``));
       game.addEntity(Objects.Portal(5, 2));
+      game.addEntity(Objects.Ghost(2, 2));
+      game.addEntity(Objects.Rat(4, 1));
     }
   },
   Tutorial1: {
     type: "start",
     preset: true,
     spawn: [1, 9],
-    exits: Exits.East,
+    exits: EAST,
     tiles: `
       #=========#
       #.........#
@@ -71,7 +74,7 @@ let Templates: { [id: string]: Template } = {
   Tutorial2: {
     type: "connector",
     preset: true,
-    exits: Exits.West | Exits.South,
+    exits: WEST | SOUTH,
     tiles: `
       ===========
       #.........#
@@ -93,7 +96,7 @@ let Templates: { [id: string]: Template } = {
   Tutorial3: {
     type: "end",
     preset: true,
-    exits: Exits.North,
+    exits: NORTH,
     tiles: `
       =====.=====
       #.........#

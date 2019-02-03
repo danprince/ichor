@@ -1,6 +1,6 @@
 import { Game, Entity, Event, Handler } from "./engine";
 import { Dungeon } from "./dungeon";
-import { ASCIIRenderer, SpriteRenderer, MinimapRenderer } from "./renderer";
+import { AsciiRenderer, SpriteRenderer, MinimapRenderer } from "./renderer";
 import { Sprite, Animation, Position, Layer, Mobile } from "./components";
 import { Sprites } from "./sprites";
 import { requestAnimationLoop } from "./utils";
@@ -8,14 +8,57 @@ import * as Events from "./events";
 import config from "./config";
 
 // This should be the only file that interacts with the DOM!
+//
+// How can we structure this "chunk" so that it can be broken down into
+// components?
+//
+// It has a few major responsibilities:
+//
+// * Building/updating the UI
+// * Turning game events into UI updates
+// * Turning UI input into game events.
+//
+// Could try a redux-esque architecture where incoming game events update
+// a bit of immutable state that drives component rendering for the other
+// bits of UI.
+//
+// Easiest way to componentize some of this stuff would be to reduce concerns
+// for the smaller pieces.
 
+//type UIState = {
+//  bloodLevel: number,
+//  inventorySlots: Entity[],
+//  selectedSlotIndex: number,
+//};
+//
+//function reducer(state: UIState, event: Event): UIState {
+//  if (event instanceof Events.SlotSelect1Event) {
+//    return { ...state, selectedSlotIndex: 0 };
+//  }
+//
+//  if (event instanceof Events.SlotSelect2Event) {
+//    return { ...state, selectedSlotIndex: 1 };
+//  }
+//
+//  if (event instanceof Events.SlotSelect3Event) {
+//    return { ...state, selectedSlotIndex: 2 };
+//  }
+//}
+
+// Could also try and help by moving some of the dom heavy logic into
+// supporting DSL like libraries. Similar to what happened with the renderer.
+
+const IS_ASCII = config["renderer.ascii"];
 const TILE_WIDTH = config["renderer.tileWidth"];
 const TILE_HEIGHT = config["renderer.tileHeight"];
 const VIEWPORT_COLUMNS = config["renderer.viewportColumns"];
 const VIEWPORT_ROWS = config["renderer.viewportRows"];
 const ANIMATION_SPEED = config["renderer.animationSpeed"];
 const HAS_ANIMATIONS = config["renderer.animations"];
-const FPS = config["renderer.FPS"];
+const MINIMAP_SCALE = config["renderer.minimapScale"];
+const FPS = config["renderer.fps"];
+
+let Renderer = IS_ASCII ? AsciiRenderer : SpriteRenderer;
 
 let dom = {
   root: document.getElementById("root"),
@@ -34,35 +77,30 @@ function sortByEntityDepth(entityA: Entity, entityB: Entity): number {
 }
 
 export class UIHandler extends Handler {
-  renderer = new SpriteRenderer(VIEWPORT_COLUMNS, VIEWPORT_ROWS);
-  inventoryRenderer = new SpriteRenderer(5, 1);
+  renderer = new Renderer(VIEWPORT_COLUMNS, VIEWPORT_ROWS);
+  inventoryRenderer = new Renderer(5, 1);
   minimapRenderer = new MinimapRenderer(240, 240);
 
   // Keep track of current dungeon for the minimap renderer.
   dungeon: Dungeon;
 
-  // UI State
+  // UI State (needs to be kept somewhere else)
   selectedSlotIndex = 0;
   isSlotActive = false;
   bloodLevel = 0;
-
-  attachToGame(game: Game) {
-    super.attachToGame(game);
-    game.addHandler(new InputHandler());
-  }
 
   StartEvent(event: Events.StartEvent) {
     dom.viewport.append(this.renderer.canvas);
     dom.minimap.append(this.minimapRenderer.canvas);
     dom.hud.append(this.inventoryRenderer.canvas);
 
-    requestAnimationLoop(this.render);
+    requestAnimationLoop(this.render, 1000 / FPS);
 
-    if (HAS_ANIMATIONS) {
+    if (!IS_ASCII) {
       requestAnimationLoop(this.animate, ANIMATION_SPEED);
     }
 
-    this.minimapRenderer.zoom(3);
+    this.minimapRenderer.scale(MINIMAP_SCALE);
     this.renderMinimap();
   }
 
@@ -202,23 +240,8 @@ export class UIHandler extends Handler {
   }
 }
 
-enum Directions {
-  None = 0b0000,
-  North = 0b1000,
-  East = 0b0100,
-  South = 0b0010,
-  West = 0b0001,
-  NorthEast = Directions.North | Directions.East,
-  NorthWest = Directions.North | Directions.West,
-  SouthEast = Directions.South | Directions.East,
-  SouthWest = Directions.South | Directions.West,
-}
-
 export class InputHandler extends Handler {
   priority = 100;
-
-  hasDiagonalLock = false;
-  diagonalDirection: number;
 
   StartEvent(event: Events.StartEvent) {
     window.addEventListener("keydown", this.onKeyDown);
@@ -230,41 +253,8 @@ export class InputHandler extends Handler {
     return mappings && mappings.includes(key);
   }
 
-  // Lots of complexity for something that doesn't even feel that great.
-  // Not sure about keeping this. Maybe move out into a utility library
-  // rather than have it cluttering up this file.
   onKeyDown = (event: KeyboardEvent) => {
     let { key } = event;
-
-    if (this.hasDiagonalLock) {
-      if (this.isMappedTo(key, "North")) {
-        this.diagonalDirection |= Directions.North;
-      } if (this.isMappedTo(key, "South")) {
-        this.diagonalDirection |= Directions.South;
-      } if (this.isMappedTo(key, "East")) {
-        this.diagonalDirection |= Directions.East;
-      } if (this.isMappedTo(key, "West")) {
-        this.diagonalDirection |= Directions.West;
-      }
-
-      let direction = this.diagonalDirection;
-      this.diagonalDirection = Directions.None;
-
-      switch (direction) {
-        case Directions.NorthWest:
-          return this.game.post(new Events.MoveNorthWestEvent);
-        case Directions.NorthEast:
-          return this.game.post(new Events.MoveNorthEastEvent);
-        case Directions.SouthEast:
-          return this.game.post(new Events.MoveSouthEastEvent);
-        case Directions.SouthWest:
-          return this.game.post(new Events.MoveSouthWestEvent);
-        default:
-          this.diagonalDirection = direction;
-      }
-
-      return;
-    }
 
     switch (true) {
       case this.isMappedTo(key, "North"):
@@ -283,21 +273,10 @@ export class InputHandler extends Handler {
         return this.game.post(new Events.MoveSouthWestEvent);
       case this.isMappedTo(key, "SouthEast"):
         return this.game.post(new Events.MoveSouthEastEvent);
-      case this.isMappedTo(key, "DiagonalLock"):
-        this.hasDiagonalLock = true;
-        this.diagonalDirection = Directions.None;
-        break;
     }
   }
 
   onKeyUp = (event: KeyboardEvent) => {
     let { key } = event;
-
-    switch (true) {
-      case this.isMappedTo(key, "DiagonalLock"):
-        this.hasDiagonalLock = false;
-        this.diagonalDirection = Directions.None;
-        break;
-    }
   }
 }

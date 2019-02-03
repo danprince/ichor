@@ -3,7 +3,7 @@ import { Sprites } from "./sprites";
 import * as Components from "./components";
 import * as Scripts from "./scripts";
 
-export let Priest = (x, y) => Entity.with(
+export let Priest = (x: number, y: number) => Entity.with(
   new Components.Position(x, y),
   new Components.Animation(Sprites.Priest, 2),
   new Components.Blocking,
@@ -16,7 +16,7 @@ export let Priest = (x, y) => Entity.with(
   new Components.Attackable,
 );
 
-export let Ghost = (x, y) => Entity.with(
+export let Ghost = (x: number, y: number) => Entity.with(
   new Components.Position(x, y),
   new Components.Animation(Sprites.Ghost, 2),
   new Components.Brain,
@@ -27,7 +27,7 @@ export let Ghost = (x, y) => Entity.with(
   new Components.Energy(1),
 );
 
-export let Rat = (x, y) => Entity.with(
+export let Rat = (x: number, y: number) => Entity.with(
   new Components.Position(x, y),
   new Components.Animation(Sprites.Rat, 2),
   new Components.Brain,
@@ -40,7 +40,7 @@ export let Rat = (x, y) => Entity.with(
   new Components.Attackable,
 );
 
-export let Well = (x, y) => Entity.with(
+export let Well = (x: number, y: number) => Entity.with(
   new Components.Position(3, 1),
   new Components.Animation(Sprites.Well, 3),
   new Components.Blocking,
@@ -51,25 +51,25 @@ export let Well = (x, y) => Entity.with(
   ),
 );
 
-export let SignPost = (x, y, message) => Entity.with(
+export let SignPost = (x: number, y: number, message: string) => Entity.with(
   new Components.Position(x, y),
   new Components.Sprite(Sprites.SignPost),
   new Components.Message(message, "help"),
 );
 
-export let Door = (x, y) => Entity.with(
+export let Door = (x: number, y: number) => Entity.with(
   new Components.Blocking,
   new Components.Position(x, y),
   new Components.Sprite(Sprites.Door),
   new Components.Openable(Sprites.DoorOpen),
 );
 
-export let Torch = (x, y) => Entity.with(
+export let Torch = (x: number, y: number) => Entity.with(
   new Components.Position(x, y),
   new Components.Animation(Sprites.Torch, 2),
 );
 
-export let Barrel = (x, y) => Entity.with(
+export let Barrel = (x: number, y: number) => Entity.with(
   new Components.Position(x, y),
   new Components.Sprite(Sprites.Barrel),
   new Components.Breakable(Sprites.SmashedBarrel),
@@ -77,7 +77,7 @@ export let Barrel = (x, y) => Entity.with(
   new Components.Blocking,
 );
 
-export let Portal = (x, y) => Entity.with(
+export let Portal = (x: number, y: number) => Entity.with(
   new Components.Position(x, y),
   new Components.Animation(Sprites.Portal, 2),
   new Components.Blocking,

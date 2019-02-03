@@ -54,6 +54,11 @@ export class MovementHandler extends Handler {
     let enterTile = this.game.getTile(x, y);
     let exitTile = this.game.getTile(origin.x, origin.y);
 
+    // We're walking on missing tiles!
+    if (enterTile === undefined || exitTile === undefined) {
+      return;
+    }
+
     // We're blocked by the destination tile type
     if (enterTile.type.walkable === false) {
       return this.game.post(new Events.TileBlockEvent(entity, enterTile, x, y));
@@ -110,12 +115,15 @@ export class DoorHandler extends Handler {
 }
 
 export class VisionHandler extends Handler {
-  // TODO: Remove hardcoded map dimensions
-  fov = new PermissiveFov(
-    11,
-    11,
-    (x, y) => this.game.getTile(x, y).type.transparent
-  );
+  fov = new PermissiveFov(0, 0, () => true);
+
+  DungeonRoomEnterEvent(event: Events.DungeonRoomEnterEvent) {
+    this.fov = new PermissiveFov(
+      event.room.tiles.width,
+      event.room.tiles.height,
+      (x, y) => this.game.getTile(x, y).type.transparent,
+    );
+  }
 
   StartEvent(event: Events.StartEvent) {
     this.update();
@@ -131,7 +139,9 @@ export class VisionHandler extends Handler {
     let radius = 5;
 
     for (let [x, y, tile] of this.game.tiles) {
-      tile.visible = false;
+      if (tile) {
+        tile.visible = false;
+      }
     }
 
     this.fov.compute(x, y, radius, (x, y) => {
@@ -146,6 +156,7 @@ export class CombatHandler extends Handler {
     let { entity, target } = event;
 
     // TODO: Better test for whether a target is attackable.
+    // TODO: Chance to miss, chance to dodge
     if (entity.hasTag("player") && target.has(Components.Attackable)) {
       this.game.post(new Events.PlayerAttackEvent(target));
     }
@@ -312,7 +323,7 @@ export class DungeonHandler extends Handler {
     position.y = y;
 
     this.game.post(
-      new Events.DungeonRoomEnterEvent(start.x, start.y)
+      new Events.DungeonRoomEnterEvent(room, start.x, start.y)
     );
   }
 
@@ -340,8 +351,8 @@ export class DungeonHandler extends Handler {
 
   DungeonRoomEnterEvent(event: Events.DungeonRoomEnterEvent) {
     // Update the current room
-    this.roomX = event.roomX;
-    this.roomY = event.roomY;
+    this.roomX = event.x;
+    this.roomY = event.y;
 
     let room = this.dungeon.getRoom(this.roomX, this.roomY);
 
@@ -396,8 +407,11 @@ export class DungeonHandler extends Handler {
       return this.game.post(new Events.MessageEvent("You can't get through there"));
     }
 
-    this.game.post(new Events.DungeonRoomExitEvent());
-    this.game.post(new Events.DungeonRoomEnterEvent(newRoomX, newRoomY));
+    this.game.post(
+      new Events.DungeonRoomExitEvent(oldRoom, oldRoomX, oldRoomY));
+
+    this.game.post(
+      new Events.DungeonRoomEnterEvent(newRoom, newRoomX, newRoomY));
 
     // Move player to corresponding entrance in the new room
     let position = entity.get(Components.Position);

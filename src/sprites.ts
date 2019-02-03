@@ -4,6 +4,10 @@ export enum Sprites {
   Floor = 1,
   Wall = 2,
   WallTop = 3,
+  StoneFloor = 4,
+  StoneWall = 5,
+  StoneWallTop = 6,
+  StoneWallTall = 7,
 
   Dark = 10,
 

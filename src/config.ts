@@ -1,5 +1,5 @@
 import * as config from "../config.json";
 
-// TODO: Load and merge any local configuration.
+// Eventually use this file to load and merge any local configurations.
 
 export default config;

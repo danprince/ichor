@@ -1,14 +1,13 @@
-let id = 0;
-
 export type ConstructorType<T> = {
   new(...args: any[]): T;
 }
 
+let id = 0;
 export function uid() {
   return id++;
 }
 
-export function assert(condition, message) {
+export function assert(condition: boolean, message: string) {
   if (!condition) {
     throw new Error(message);
   }
@@ -44,7 +43,7 @@ export class PriorityQueue<T> {
 }
 
 export class Grid<T> {
-  items: T[];
+  private items: T[];
 
   constructor(public width: number, public height: number) {
     this.items = new Array(width * height);
@@ -64,6 +63,14 @@ export class Grid<T> {
     }
   }
 
+  empty() {
+    this.items = [];
+  }
+
+  toArray(): T[] {
+    return this.items;
+  }
+
   isInside(x: number, y: number) {
     return x >= 0 || y >= 0 || x < this.width || y < this.width;
   }
@@ -73,7 +80,7 @@ export class Grid<T> {
   }
 
   *[Symbol.iterator]() {
-    let result = [];
+    let result: [number, number, T | undefined] = [0, 0, undefined];
 
     for (let x = 0; x < this.width; x++) {
       result[0] = x;

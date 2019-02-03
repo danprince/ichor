@@ -1,12 +1,10 @@
 import { Game, Entity } from "./engine";
 import { Sprites } from "./sprites";
-import { Dungeon, DungeonGenerator } from "./dungeon";
+import { Dungeon } from "./dungeon";
+import { Generator, GeneratorViewer } from "./generator";
 import { Templates, legend } from "./templates";
-import { UIHandler, InputHandler } from "./ui";
-import * as Handlers from "./handlers";
-import * as Events from "./events";
-import * as Components from "./components";
-import * as Scripts from "./scripts";
+import { Handlers, Events, Components, Scripts } from "./registry";
+import * as DOM from "./dom";
 import nexus from "./nexus";
 import config from "./config";
 
@@ -20,7 +18,7 @@ let game = new Game();
 game.addHandler(new Handlers.ScriptingHandler);
 game.addHandler(new Handlers.DungeonHandler);
 game.addHandler(new Handlers.MovementHandler);
-game.addHandler(new Handlers.VisionHandler);
+//game.addHandler(new Handlers.VisionHandler);
 game.addHandler(new Handlers.CombatHandler);
 game.addHandler(new Handlers.DamageHandler);
 game.addHandler(new Handlers.DestructionHandler);
@@ -29,7 +27,9 @@ game.addHandler(new Handlers.DoorHandler);
 game.addHandler(new Handlers.EnergyHandler);
 game.addHandler(new Handlers.AIHandler);
 game.addHandler(new Handlers.TurnHandler);
-game.addHandler(new UIHandler);
+
+game.addHandler(new DOM.InputHandler);
+game.addHandler(new DOM.UIHandler);
 
 let player = Entity.with(
   new Components.Position(1, 9),
@@ -45,20 +45,44 @@ let player = Entity.with(
 player.addTag("player");
 game.addEntity(player);
 
-let generator = new DungeonGenerator({
-  seed: Math.random() * 123456,
-  width: 10,
-  height: 10,
-  rooms: 80,
-});
+let viewer = new GeneratorViewer();
 
-let dungeon = generator.generate(Templates, legend);
+window.onload = window.onkeydown = () => {
+  //let generator = new Generator({
+  //  seed: Math.random() * 100,
+  //  width: 10,
+  //  height: 10,
+  //  rooms: 20,
+  //  maxRetries: 10,
+  //  maxIterations: 100,
+  //  density: -9,
+  //}, Templates);
 
-game.post(new Events.DungeonLoadEvent(nexus));
-game.post(new Events.StartEvent);
+  let generator = new Generator({
+    seed: Math.random() * 10000,
+    width: 10,
+    height: 10,
+  }, Templates);
+
+  let draft = generator.generate();
+  let dungeon = new Dungeon(draft.width, draft.height);
+
+  viewer.draw(generator);
+
+  for (let [x, y, node] of draft) {
+    if (node) {
+      let room = Dungeon.roomFromTemplate(node.template, legend);
+      dungeon.setRoom(x, y, room);
+    }
+  }
+
+  //game.post(new Events.DungeonLoadEvent(dungeon));
+  //game.post(new Events.StartEvent);
+};
+
 
 if (config["debug.globals"]) {
-  Object.assign(window, {
+  Object.assign(self, {
     game,
     player,
     Events,

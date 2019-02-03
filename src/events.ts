@@ -1,7 +1,7 @@
 import { Event, Entity } from "./engine";
 import { Tile } from "./tiles";
 import { Channel } from "./messages";
-import { Dungeon } from "./dungeon";
+import { Dungeon, Room } from "./dungeon";
 
 export class StartEvent extends Event {}
 export class TurnEvent extends Event {}
@@ -222,13 +222,13 @@ export class DungeonExitEvent extends Event {
 }
 
 export class DungeonRoomExitEvent extends Event {
-  constructor() {
+  constructor(public room: Room, public x: number, public y: number) {
     super();
   }
 }
 
 export class DungeonRoomEnterEvent extends Event {
-  constructor(public roomX: number, public roomY: number) {
+  constructor(public room: Room, public x: number, public y: number) {
     super();
   }
 }
